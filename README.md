@@ -23,7 +23,7 @@ This document details the telemetry and automation phases of the Active Director
 8. Allow inbound traffic on port 8000 (Splunk Web). Add a rule to your cloud provider's firewall (e.g., Vultr) for TCP Port 8000 matching your host IP, and configure the Ubuntu firewall:
    `ufw allow 8000`
 9. Access the Splunk web interface via your browser: `http://<Splunk-Public-IP>:8000` and log in.
-> *[Insert Screenshot: The Splunk Web login screen showing the public IP and port 8000 in the address bar.]*
+> [Screenshot: The Splunk Web login screen showing the public IP and port 8000 in the address bar.]
 
 ### 2. Configure Splunk Settings
 1. Click your username in the top right corner, select **Preferences**, set the Time zone to **GMT**, and click **Apply**.
@@ -33,7 +33,7 @@ This document details the telemetry and automation phases of the Active Director
 5. Navigate to **Settings** > **Forwarding and receiving** > **Configure receiving** > **New Receiving Port**. Enter `9997` and click **Save**.
 6. Back in your Ubuntu SSH session, open the firewall for port 9997:
    `ufw allow 9997`
-> *[Insert Screenshot: Splunk Settings showing the newly created 'mydfir-ad' index.]*
+> [Screenshot: Splunk Settings showing the newly created 'mydfir-ad' index.]
 
 ### 3. Install the Splunk Universal Forwarder (Windows Endpoints)
 *Perform these steps on both the Windows Test Machine and the Domain Controller.*
@@ -60,7 +60,7 @@ This document details the telemetry and automation phases of the Active Director
 7. Open Windows **Services** as Administrator. Locate the **SplunkForwarder** service, double-click it, go to the **Log On** tab, and switch the account to **Local System account**. Click **Apply**.
 8. Right-click the **SplunkForwarder** service and select **Restart**.
 9. In the Splunk Web interface, verify logs are arriving by running the search: `index="mydfir-ad"`.
-> *[Insert Screenshot: Splunk Search app showing event logs successfully populating from the Windows endpoints.]*
+> [Screenshot: Splunk Search app showing event logs successfully populating from the Windows endpoints.]
 
 ### 5. Create an Unauthorized Login Alert
 1. In Splunk, construct a search query to identify successful RDP authentications (EventCode 4624, Logon Types 7 or 10) originating from outside the authorized IP subnet:
@@ -73,7 +73,7 @@ This document details the telemetry and automation phases of the Active Director
 4. Set the Alert type to **Scheduled**, utilizing a Cron Schedule (e.g., `* * * * *` to run every minute for lab testing).
 5. Set the Time Range to the **Last 60 minutes**.
 6. Under Trigger Actions, click **Add Actions**, select **Add to Triggered Alerts**, and assign a **Medium** severity. Click **Save**.
-> *[Insert Screenshot: The configured Alert showing the schedule, trigger conditions, and the specific search query.]*
+> [Screenshot: The configured Alert showing the schedule, trigger conditions, and the specific search query.]
 
 ---
 
@@ -87,7 +87,7 @@ This document details the telemetry and automation phases of the Active Director
 3. In Splunk Web, go to **Alerts**, edit the `MyDFIR-Unauthorized-Successful-Login-RDP` alert, and click **Add Actions** > **Webhook**.
 4. Paste the Shuffle Webhook URI and save the alert.
 5. In Shuffle, click the **Start** button on the Webhook node to begin listening for incoming events.
-> *[Insert Screenshot: The Shuffle canvas showing the active Webhook node alongside the Splunk Webhook configuration pane.]*
+> [Screenshot: The Shuffle canvas showing the active Webhook node alongside the Splunk Webhook configuration pane.]
 
 ### 2. Set Up Slack Notifications
 1. Create a free Slack workspace (e.g., `mydfir-projects`) and establish a public channel named `#alerts`.
@@ -99,14 +99,14 @@ This document details the telemetry and automation phases of the Active Director
      `User: $exec.result.user`
      `Source IP: $exec.result.Source_Network_Address`
    * **Channel:** Paste your Slack Channel ID (located in the URL string when viewing the channel in a web browser).
-> *[Insert Screenshot: The Slack node configuration in Shuffle displaying the mapped runtime arguments.]*
+> [Screenshot: The Slack node configuration in Shuffle displaying the mapped runtime arguments.]
 
 ### 3. Configure Human-in-the-Loop (Email Approval)
 1. Drag a **User Input** trigger node into the workflow and connect the Slack node to it.
 2. Rename the node to `User Action`.
 3. Configure the question prompt: `Would you like to disable the user?`
 4. Set the **Notification Type** to **Email** and supply the designated SOC Analyst email address.
-> *[Insert Screenshot: The User Input node configuration showing the specified prompt and email recipient.]*
+> [Screenshot: The User Input node configuration showing the specified prompt and email recipient.]
 
 ### 4. Automate Active Directory Account Disabling
 1. Drag an **Active Directory** app node onto the canvas and connect the User Input node to it.
@@ -120,7 +120,7 @@ This document details the telemetry and automation phases of the Active Director
    * **Use SSL:** `false`
 3. Set the Action to **Disable User**.
 4. Set the Account Name field to dynamic input from the Splunk alert: `$exec.result.user`.
-> *[Insert Screenshot: The Active Directory node configuration detailing the connection parameters and Disable User action.]*
+> [Screenshot: The Active Directory node configuration detailing the connection parameters and Disable User action.]
 
 ### 5. Verify Action and Send Final Slack Update
 1. Drag a second **Active Directory** app node onto the canvas and connect it to the first AD node.
@@ -129,4 +129,4 @@ This document details the telemetry and automation phases of the Active Director
 4. Click the connecting line between the second AD node and the final Slack node to create a condition. Set it to trigger only if the parsed `userAccountControl` attribute contains `Account Disabled`.
 5. Configure the final Slack node to post to the `#alerts` channel with the text: `Account $exec.result.user has been disabled.`
 6. Start the workflow, trigger an RDP login alert, approve the email prompt, and verify that the account is successfully disabled in Active Directory and the final confirmation appears in Slack.
-> *[Insert Screenshot: The completed Shuffle workflow depicting the entire SOAR pipeline from Webhook to Final Slack Notification.]*
+> [Screenshot: The completed Shuffle workflow depicting the entire SOAR pipeline from Webhook to Final Slack Notification.]

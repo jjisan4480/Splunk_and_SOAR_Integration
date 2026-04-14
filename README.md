@@ -19,7 +19,7 @@ This document details the telemetry and automation phases of the Active Director
    `cd /opt/splunk/bin`
 6. Start the Splunk service:
    `./splunk start`
-7. Press the **Spacebar** to scroll through the license agreement, type `y` to accept, and create your Splunk Administrator credentials (e.g., username `mydfir`).
+7. Press the **Spacebar** to scroll through the license agreement, type `y` to accept, and create your Splunk Administrator credentials (e.g., username `DC`).
 8. Allow inbound traffic on port 8000 (Splunk Web). Add a rule to your cloud provider's firewall (e.g., Vultr) for TCP Port 8000 matching your host IP, and configure the Ubuntu firewall:
    `ufw allow 8000`
 9. Access the Splunk web interface via your browser: `http://<Splunk-Public-IP>:8000` and log in.
@@ -29,17 +29,17 @@ This document details the telemetry and automation phases of the Active Director
 1. Click your username in the top right corner, select **Preferences**, set the Time zone to **GMT**, and click **Apply**.
 2. On the left navigation pane, go to **Apps** > **Find More Apps**.
 3. Search for `Windows` and install the **Splunk Add-on for Microsoft Windows**. Enter your Splunk credentials to confirm the installation.
-4. Navigate to **Settings** > **Indexes**, click **New Index**, name it `mydfir-ad`, and click **Save**.
+4. Navigate to **Settings** > **Indexes**, click **New Index**, name it `DC-ad`, and click **Save**.
 5. Navigate to **Settings** > **Forwarding and receiving** > **Configure receiving** > **New Receiving Port**. Enter `9997` and click **Save**.
 6. Back in your Ubuntu SSH session, open the firewall for port 9997:
    `ufw allow 9997`
-> [Screenshot: Splunk Settings showing the newly created 'mydfir-ad' index.]
+> [Screenshot: Splunk Settings showing the newly created 'DC-ad' index.]
 
 ### 3. Install the Splunk Universal Forwarder (Windows Endpoints)
 *Perform these steps on both the Windows Test Machine and the Domain Controller.*
 1. Download the **Splunk Universal Forwarder** (Windows 64-bit `.msi`) from the Splunk website.
 2. Run the installer, accept the license agreement, and click **Next**.
-3. Create an administrator username (e.g., `mydfir`) and password.
+3. Create an administrator username (e.g., `DC`) and password.
 4. Skip the Deployment Server step by clicking **Next**.
 5. In the Receiving Indexer step, enter the **private IP address** of your Ubuntu Splunk Server and set the port to `9997`. Click **Next** and **Install**.
 > *[Insert Screenshot: The Universal Forwarder setup wizard highlighting the Receiving Indexer IP and Port 9997 configuration.]*
@@ -53,23 +53,23 @@ This document details the telemetry and automation phases of the Active Director
 5. Scroll to the bottom of the file and append the following configuration to forward Security logs to your custom index:
 
         [WinEventLog://Security]
-        index = mydfir-ad
+        index = DC-ad
         disabled = false
 
 6. Save and close the file.
 7. Open Windows **Services** as Administrator. Locate the **SplunkForwarder** service, double-click it, go to the **Log On** tab, and switch the account to **Local System account**. Click **Apply**.
 8. Right-click the **SplunkForwarder** service and select **Restart**.
-9. In the Splunk Web interface, verify logs are arriving by running the search: `index="mydfir-ad"`.
+9. In the Splunk Web interface, verify logs are arriving by running the search: `index="DC-ad"`.
 > [Screenshot: Splunk Search app showing event logs successfully populating from the Windows endpoints.]
 
 ### 5. Create an Unauthorized Login Alert
 1. In Splunk, construct a search query to identify successful RDP authentications (EventCode 4624, Logon Types 7 or 10) originating from outside the authorized IP subnet:
 
-        index="mydfir-ad" EventCode=4624 (Logon_Type=7 OR Logon_Type=10) Source_Network_Address!="-" Source_Network_Address!="<Your_Authorized_IP_Subnet>*"
+        index="DC-ad" EventCode=4624 (Logon_Type=7 OR Logon_Type=10) Source_Network_Address!="-" Source_Network_Address!="<Your_Authorized_IP_Subnet>*"
         | stats count by _time, ComputerName, Source_Network_Address, user, Logon_Type
 
 2. Click **Save As** > **Alert**.
-3. Name the alert (e.g., `MyDFIR-Unauthorized-Successful-Login-RDP`).
+3. Name the alert (e.g., `DC-Unauthorized-Successful-Login-RDP`).
 4. Set the Alert type to **Scheduled**, utilizing a Cron Schedule (e.g., `* * * * *` to run every minute for lab testing).
 5. Set the Time Range to the **Last 60 minutes**.
 6. Under Trigger Actions, click **Add Actions**, select **Add to Triggered Alerts**, and assign a **Medium** severity. Click **Save**.
@@ -82,15 +82,15 @@ This document details the telemetry and automation phases of the Active Director
 **Objective:** Build an automated workflow in Shuffle that receives Splunk alerts, notifies the SOC team via Slack, requests human-in-the-loop approval via email, and automatically disables the compromised user account in Active Directory.
 
 ### 1. Configure the Splunk Webhook in Shuffle
-1. Log into **Shuffle** (shuffler.io) and create a new workflow named `MyDFIR-AD-Project-2.0`.
+1. Log into **Shuffle** (shuffler.io) and create a new workflow named `DC-AD-Project-2.0`.
 2. Drag a **Webhook** trigger onto the canvas, rename it `Splunk-Alert`, and copy the generated Webhook URI.
-3. In Splunk Web, go to **Alerts**, edit the `MyDFIR-Unauthorized-Successful-Login-RDP` alert, and click **Add Actions** > **Webhook**.
+3. In Splunk Web, go to **Alerts**, edit the `DC-Unauthorized-Successful-Login-RDP` alert, and click **Add Actions** > **Webhook**.
 4. Paste the Shuffle Webhook URI and save the alert.
 5. In Shuffle, click the **Start** button on the Webhook node to begin listening for incoming events.
 > [Screenshot: The Shuffle canvas showing the active Webhook node alongside the Splunk Webhook configuration pane.]
 
 ### 2. Set Up Slack Notifications
-1. Create a free Slack workspace (e.g., `mydfir-projects`) and establish a public channel named `#alerts`.
+1. Create a free Slack workspace (e.g., `DC-projects`) and establish a public channel named `#alerts`.
 2. In your Shuffle workflow, drag the **Slack** app node onto the canvas and connect the Webhook node to it. Rename it `Alert-Notification`.
 3. Click **Authenticate**, log into Slack, and grant the Shuffle bot permission to access your workspace.
 4. Configure the Slack node parameters to format the alert using Shuffle runtime arguments:
@@ -116,7 +116,7 @@ This document details the telemetry and automation phases of the Active Director
    * **Domain:** `<Your_Domain>`
    * **Logon User:** `Administrator`
    * **Password:** `<Your_Admin_Password>`
-   * **Base DN:** The path to the Users container (e.g., `CN=Users,DC=mydfir,DC=local`).
+   * **Base DN:** The path to the Users container (e.g., `CN=Users,DC=DC,DC=local`).
    * **Use SSL:** `false`
 3. Set the Action to **Disable User**.
 4. Set the Account Name field to dynamic input from the Splunk alert: `$exec.result.user`.

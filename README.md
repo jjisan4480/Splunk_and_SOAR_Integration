@@ -42,7 +42,7 @@ This document details the telemetry and automation phases of the Active Director
 3. Create an administrator username (e.g., `DC`) and password.
 4. Skip the Deployment Server step by clicking **Next**.
 5. In the Receiving Indexer step, enter the **private IP address** of your Ubuntu Splunk Server and set the port to `9997`. Click **Next** and **Install**.
-> *[Insert Screenshot: The Universal Forwarder setup wizard highlighting the Receiving Indexer IP and Port 9997 configuration.]*
+> [Screenshot: The Universal Forwarder setup wizard highlighting the Receiving Indexer IP and Port 9997 configuration.]
 
 ### 4. Configure Telemetry Forwarding (Windows Endpoints)
 *Perform these steps on both the Windows Test Machine and the Domain Controller.*

@@ -4,7 +4,7 @@ This document details the telemetry and automation phases of the Active Director
 
 ---
 
-## Part 4: Splunk Installation and Telemetry Configuration
+## Part 1: Splunk Installation and Telemetry Configuration
 
 **Objective:** Install Splunk Enterprise, configure Windows endpoints to send telemetry via the Universal Forwarder, and create an alert to detect unauthorized RDP authentications.
 
@@ -77,7 +77,7 @@ This document details the telemetry and automation phases of the Active Director
 
 ---
 
-## Part 5: Integrating SOAR (Shuffle, Slack, and Active Directory)
+## Part 2: Integrating SOAR (Shuffle, Slack, and Active Directory)
 
 **Objective:** Build an automated workflow in Shuffle that receives Splunk alerts, notifies the SOC team via Slack, requests human-in-the-loop approval via email, and automatically disables the compromised user account in Active Directory.
 
